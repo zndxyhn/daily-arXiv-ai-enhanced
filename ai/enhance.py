@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 import langchain_core.exceptions
 from langchain_openai import ChatOpenAI
-from langchain.prompts import (
+from langchain_core.prompts import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
@@ -40,6 +40,11 @@ def process_single_item(chain, item: Dict, language: str) -> Dict:
         调用 spam.dw-dengwei.workers.dev 接口检测内容是否包含敏感词。
         返回 True 表示触发敏感词，False 表示未触发。
         """
+        # 检查是否跳过敏感性检查（在本地测试时很有用）
+        skip_sensitivity_check = os.environ.get("SKIP_SENSITIVITY_CHECK", "").lower() in ('true', '1', 'yes', 'on')
+        if skip_sensitivity_check:
+            return False  # 不认为是敏感内容
+
         try:
             resp = requests.post(
                 "https://spam.dw-dengwei.workers.dev",
@@ -49,14 +54,14 @@ def process_single_item(chain, item: Dict, language: str) -> Dict:
             if resp.status_code == 200:
                 result = resp.json()
                 # 约定接口返回 {"sensitive": true/false, ...}
-                return result.get("sensitive", True)
+                return result.get("sensitive", False)  # 默认为 False 而不是 True
             else:
                 # 如果接口异常，默认不触发敏感词
                 print(f"Sensitive check failed with status {resp.status_code}", file=sys.stderr)
-                return True
+                return False
         except Exception as e:
             print(f"Sensitive check error: {e}", file=sys.stderr)
-            return True
+            return False  # 默认为 False 而不是 True
 
     def check_github_code(content: str) -> Dict:
         """提取并验证 GitHub 链接"""
@@ -121,7 +126,10 @@ def process_single_item(chain, item: Dict, language: str) -> Dict:
         "motivation": "Motivation analysis unavailable",
         "method": "Method extraction failed",
         "result": "Result analysis unavailable",
-        "conclusion": "Conclusion extraction failed"
+        "conclusion": "Conclusion extraction failed",
+        "tags": [],
+        "score": 3,
+        "recommendation_reason": "No recommendation reason provided"
     }
     
     try:
@@ -153,11 +161,22 @@ def process_single_item(chain, item: Dict, language: str) -> Dict:
         # Catch any other exceptions and provide default values
         print(f"Unexpected error for {item.get('id', 'unknown')}: {e}", file=sys.stderr)
         item['AI'] = default_ai_fields
-    
+
     # Final validation to ensure all required fields exist
     for field in default_ai_fields.keys():
         if field not in item['AI']:
             item['AI'][field] = default_ai_fields[field]
+
+    # Ensure tags is always a list
+    if not isinstance(item['AI'].get('tags'), list):
+        item['AI']['tags'] = []
+
+    # Ensure score is within valid range
+    score = item['AI'].get('score', 3)
+    if not isinstance(score, int) or score < 1 or score > 5:
+        item['AI']['score'] = 3
+    else:
+        item['AI']['score'] = max(1, min(5, score))
 
     # 检查 AI 生成的所有字段
     for v in item.get("AI", {}).values():

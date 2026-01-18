@@ -1694,13 +1694,15 @@ footer {
 }
 
 
+
+/* 作者标签样式 */
 .author-tag {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 4px 12px;
   margin-right: 8px;
-  background-color: var(--tag-bg);
+  background-color: var(--background-hover);
   color: var(--text-secondary);
   border-radius: 16px;
   font-size: 13px;
@@ -1717,11 +1719,11 @@ footer {
 }
 
 .author-tag:hover {
-  background-color: var(--tag-hover-bg);
+  background-color: var(--border-color);
 }
 
 .author-tag.active:hover {
-  background: var(--gradient-primary-hover);
+  background: var(--gradient-primary);
 }
 
 /* 高亮样式 */
@@ -2325,4 +2327,99 @@ footer {
 .footer-left {
   display: flex;
   align-items: center;
+}
+
+/* 评分和标签样式 */
+.paper-score {
+  font-weight: bold;
+  color: var(--gold-color);
+  margin-right: 15px;
+}
+
+.paper-tags {
+  display: inline-block;
+}
+
+.paper-tag {
+  display: inline-block;
+  background-color: var(--keyword-color);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+.paper-meta-info {
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.paper-meta-info div {
+  margin-bottom: 8px;
+}
+
+.paper-meta-info strong {
+  color: var(--text-secondary);
+}
+
+.paper-recommendation-section {
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+/* 标签按钮样式 */
+.tag-button {
+  background-color: #8b5cf6;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  margin: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tag-button:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+.tag-button.active {
+  background-color: #6d2dad;
+  box-shadow: 0 0 0 2px rgba(109, 45, 173, 0.3);
+}
+
+.tag-button.active:hover {
+  transform: scale(1.08);
+}
+
+/* 标签高亮动画 */
+.tag-highlight {
+  animation: tagHighlight 1s ease;
+}
+
+@keyframes tagHighlight {
+  0% { background-color: #fef08a; }
+  100% { background-color: #8b5cf6; }
+}
+
+/* 标签出现动画 */
+.tag-appear {
+  animation: tagAppear 0.3s ease;
+}
+
+@keyframes tagAppear {
+  0% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* 修复缺失的结束大括号 */
 }

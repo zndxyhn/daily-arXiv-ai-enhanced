@@ -10,6 +10,8 @@ function initSettings() {
   loadKeywordPreferences();
   // 作者偏好设置
   loadAuthorPreferences();
+  // 标签偏好设置
+  loadTagPreferences();
 }
 
 // 从localStorage加载关键词偏好
@@ -86,6 +88,105 @@ function showEmptyAuthorMessage() {
   emptyMessage.className = 'empty-tag-message';
   emptyMessage.textContent = 'No authors added yet. Add some authors below.';
   selectedAuthorsContainer.appendChild(emptyMessage);
+}
+
+// 从localStorage加载标签偏好
+function loadTagPreferences() {
+  const selectedTagsContainer = document.getElementById('selectedTags');
+  selectedTagsContainer.innerHTML = '';
+
+  // 获取保存的标签，如果没有则为空数组
+  let savedTags = localStorage.getItem('preferredTags');
+  let tags = []; // 默认无标签
+
+  if (savedTags) {
+    try {
+      tags = JSON.parse(savedTags);
+    } catch (e) {
+      console.error('解析保存的标签失败:', e);
+    }
+  }
+
+  // 显示保存的标签
+  if (tags.length > 0) {
+    tags.forEach(tag => {
+      addTagTag(tag);
+    });
+  } else {
+    // 显示空标签消息
+    showEmptyTagTagMessage();
+  }
+}
+
+// 显示空标签标签消息
+function showEmptyTagTagMessage() {
+  const selectedTagsContainer = document.getElementById('selectedTags');
+  const emptyMessage = document.createElement('div');
+  emptyMessage.id = 'emptyTagTagMessage';
+  emptyMessage.className = 'empty-tag-message';
+  emptyMessage.textContent = 'No tags added yet. Add some tags below.';
+  selectedTagsContainer.appendChild(emptyMessage);
+}
+
+// 隐藏空标签标签消息
+function hideEmptyTagTagMessage() {
+  const emptyMessage = document.getElementById('emptyTagTagMessage');
+  if (emptyMessage) {
+    emptyMessage.remove();
+  }
+}
+
+// 添加标签标签
+function addTagTag(tag) {
+  const selectedTagsContainer = document.getElementById('selectedTags');
+
+  // 移除空标签消息
+  hideEmptyTagTagMessage();
+
+  // 检查标签是否已存在
+  const existingTags = selectedTagsContainer.querySelectorAll('.category-button');
+  for (let i = 0; i < existingTags.length; i++) {
+    if (existingTags[i].textContent.trim().startsWith(tag)) {
+      // 已存在该标签，添加闪烁动画提示用户
+      existingTags[i].classList.add('tag-highlight');
+      setTimeout(() => {
+        existingTags[i].classList.remove('tag-highlight');
+      }, 1000);
+      return; // 标签已存在，不添加
+    }
+  }
+
+  // 创建新的标签标签
+  const tagElement = document.createElement('span');
+  tagElement.className = 'category-button tag-appear';
+  tagElement.innerHTML = `${tag} <button class="remove-tag">×</button>`;
+
+  // 添加删除按钮事件
+  const removeButton = tagElement.querySelector('.remove-tag');
+  removeButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // 添加删除动画
+    tagElement.classList.add('tag-disappear');
+
+    // 动画结束后移除元素
+    setTimeout(() => {
+      tagElement.remove();
+
+      // 如果没有标签了，显示空标签消息
+      if (selectedTagsContainer.querySelectorAll('.category-button').length === 0) {
+        showEmptyTagTagMessage();
+      }
+    }, 300);
+  });
+
+  selectedTagsContainer.appendChild(tagElement);
+
+  // 添加出现动画后移除动画类
+  setTimeout(() => {
+    tagElement.classList.remove('tag-appear');
+  }, 300);
 }
 
 // 隐藏空标签消息
@@ -256,18 +357,44 @@ function initEventListeners() {
     if (e.key === 'Enter') {
       e.preventDefault();
       const author = authorInput.value.trim();
-      
+
       if (author) {
         addAuthorTag(author);
         authorInput.value = '';
       }
     }
   });
-  
+
+  // 标签添加按钮
+  const addTagButton = document.getElementById('addTag');
+  addTagButton.addEventListener('click', () => {
+    const tagInput = document.getElementById('tagInput');
+    const tag = tagInput.value.trim();
+
+    if (tag) {
+      addTagTag(tag);
+      tagInput.value = '';
+    }
+  });
+
+  // 标签输入框回车事件
+  const tagInput = document.getElementById('tagInput');
+  tagInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const tag = tagInput.value.trim();
+
+      if (tag) {
+        addTagTag(tag);
+        tagInput.value = '';
+      }
+    }
+  });
+
   // 保存设置按钮
   const saveSettingsButton = document.getElementById('saveSettings');
   saveSettingsButton.addEventListener('click', saveSettings);
-  
+
   // 重置设置按钮
   const resetSettingsButton = document.getElementById('resetSettings');
   resetSettingsButton.addEventListener('click', resetSettings);
@@ -282,7 +409,7 @@ function saveSettings() {
     const keywordName = tag.textContent.trim().replace('×', '').trim();
     keywords.push(keywordName);
   });
-  
+
   // 获取所有选中的作者
   const authorTags = document.getElementById('selectedAuthors').querySelectorAll('.category-button');
   const authors = [];
@@ -290,11 +417,20 @@ function saveSettings() {
     const authorName = tag.textContent.trim().replace('×', '').trim();
     authors.push(authorName);
   });
-  
+
+  // 获取所有选中的标签
+  const tagTags = document.getElementById('selectedTags').querySelectorAll('.category-button');
+  const tags = [];
+  tagTags.forEach(tag => {
+    const tagName = tag.textContent.trim().replace('×', '').trim();
+    tags.push(tagName);
+  });
+
   // 保存设置到localStorage
   localStorage.setItem('preferredKeywords', JSON.stringify(keywords));
   localStorage.setItem('preferredAuthors', JSON.stringify(authors));
-  
+  localStorage.setItem('preferredTags', JSON.stringify(tags));
+
   // 显示保存成功提示，添加成功图标
   showNotification('Settings saved successfully!', 'success');
 }
@@ -304,15 +440,20 @@ function resetSettings() {
   // 重置关键词
   const selectedKeywordsContainer = document.getElementById('selectedKeywords');
   selectedKeywordsContainer.innerHTML = '';
-  
+
   // 重置作者
   const selectedAuthorsContainer = document.getElementById('selectedAuthors');
   selectedAuthorsContainer.innerHTML = '';
-  
+
+  // 重置标签
+  const selectedTagsContainer = document.getElementById('selectedTags');
+  selectedTagsContainer.innerHTML = '';
+
   // 显示空标签消息
   showEmptyTagMessage();
   showEmptyAuthorMessage();
-  
+  showEmptyTagTagMessage();
+
   // 显示重置成功提示
   showNotification('Settings reset to default!', 'info');
 }

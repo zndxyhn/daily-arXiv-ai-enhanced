@@ -3,6 +3,10 @@
 
 Main category: {cate}
 
+Score: {score}/5 | Tags: {tags}
+
+Recommendation: {recommendation_reason}
+
 TL;DR: {tldr}
 
 

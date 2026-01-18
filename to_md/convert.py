@@ -64,9 +64,19 @@ if __name__ == "__main__":
                         result=ai_data.get('result', ''),
                         conclusion=ai_data.get('conclusion', ''),
                         cate=item['categories'][0],
-                        idx=next(idx)
+                        idx=next(idx),
+                        score=ai_data.get('score', 3),
+                        tags=', '.join(ai_data.get('tags', [])),
+                        recommendation_reason=ai_data.get('recommendation_reason', '')
                     )
                 )
         markdown += "\n\n".join(papers)
-    with open(args.data.split('_')[0] + '.md', "w") as f:
-        f.write(markdown)
+    import locale
+    # 使用系统默认编码，但如果包含非ASCII字符则强制使用UTF-8
+    try:
+        with open(args.data.split('_')[0] + '.md', "w") as f:
+            f.write(markdown)
+    except UnicodeEncodeError:
+        # 如果系统默认编码无法处理，使用UTF-8
+        with open(args.data.split('_')[0] + '.md', "w", encoding='utf-8') as f:
+            f.write(markdown)
